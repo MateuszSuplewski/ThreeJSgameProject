@@ -25,7 +25,58 @@
 
 <body>
   <script>  
-    
+    function compare(a,b)
+    {
+      if(isNaN(a)){
+        console.log('a is not a number');
+      }
+      else if(isNaN(b)){
+        console.log('b is not a number');
+      }
+      else if(a<b){
+        console.log('a is less than b');
+      }
+      else if(a==b){
+        console.log('a equals b');
+      }
+      else{
+        console.log('a is greater than b');
+      }
+    }
+
+    function today(){
+      const day= new Date().getDay();
+
+      switch(day){
+        case 0:
+          console.log('today is Sunday');
+          break;
+        case 1:
+          console.log('today is Monday');
+          break;
+        case 2:
+          console.log('today is Tuesday');
+          break;
+        case 3:
+          console.log('today is Wednesday');
+          break;
+        case 4:
+          console.log('today is Thursday');
+          break;
+        case 5:
+          console.log('today is Friday');
+          break;
+        case 6:
+          console.log('today is Saturday');
+          break;
+      }
+    }
+
+    function weekend(){
+      const day= new Date().getDay();
+
+      return (day==0 || day==6) ? "It's the weekend" : "It's not the weekend";
+    }
   </script>
 </body>
 
