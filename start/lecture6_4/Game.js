@@ -86,7 +86,7 @@ class Game{
 			gltf => {
 
 				this.scene.add( gltf.scene );
-                this.eve = gltf.scene;
+                this.NPC = gltf.scene;
 				this.mixer = new THREE.AnimationMixer( gltf.scene );
 
 				this.animations = {};
