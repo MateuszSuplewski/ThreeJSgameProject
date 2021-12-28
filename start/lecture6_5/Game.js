@@ -19,7 +19,7 @@ class Game{
         
 		this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 500 );
 
-		this.camera.position.set( 0, 60, 20 );
+		this.camera.position.set( 0, 10, 20 );
         this.camera.lookAt(0, 0, -10);
 		
 		let col = 0x201510;
@@ -60,7 +60,9 @@ class Game{
 	}
 
 	initPathfinding(navmesh){
-		
+		this.pathfinder = new Pathfinding();
+		this.pathfinder.setZoneData('factory' , Pathfinding.createZone(navmesh.geometry,0.02));
+		if(this.npcHandler.gltf !== undefined) this.npcHandler.initNPCs();
 	}
 	
     resize(){
@@ -93,7 +95,12 @@ class Game{
     
 	load(){
         this.loadEnvironment();
+		this.npcHandler = new NPCHandler(this);
     }
+
+	startRendering(){
+		this.renderer.setAnimationLoop(this.render.bind(this));
+	}
 
     loadEnvironment(){
     	const loader = new GLTFLoader( ).setPath(`${this.assetsPath}factory/`);
@@ -103,7 +110,7 @@ class Game{
 		// Load a glTF resource
 		loader.load(
 			// resource URL
-			'factory2.glb',
+			'MyMap2.glb',
 			// called when the resource is loaded
 			gltf => {
 
@@ -115,6 +122,14 @@ class Game{
 
 				gltf.scene.traverse( child => {
 					if (child.isMesh){
+						if (child.name == 'NavMesh'){
+							this.navmesh = child;
+							this.navmesh.geometry.rotateX(Math.PI/2);
+							this.navmesh.quaternion.identity();
+							this.navmesh.position.set(0,0,0);
+							child.material.transparent = true;
+							child.material.opacity = 0.5;
+						}
 						if (child.name.includes('fan')){
 							this.fans.push( child );
 						}else if (child.material.name.includes('elements2')){
@@ -136,6 +151,9 @@ class Game{
 						}
 					}
 				});
+
+				this.scene.add(this.navmesh);
+				this.initPathfinding(this.navmesh);
 
 				for(let prop in mergeObjects){
 					const array = mergeObjects[prop];
@@ -176,7 +194,7 @@ class Game{
                 fan.rotateY(dt); 
             });
         }
-
+		if (this.npcHandler !== undefined) this.npcHandler.update(dt);
         this.renderer.render( this.scene, this.camera );
 
     }
