@@ -110,7 +110,7 @@ class Game{
 		// Load a glTF resource
 		loader.load(
 			// resource URL
-			'MyMap2.glb',
+			'MyMap.glb',
 			// called when the resource is loaded
 			gltf => {
 
