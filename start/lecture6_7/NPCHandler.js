@@ -74,6 +74,8 @@ class NPCHandler{
 		const gltfs = [gltf];
 		this.waypoints = this.game.waypoints;
 		this.npcs = [];
+
+		for(let i=0; i<3; i++) gltfs.push(this.cloneGLTF(gltf));
 		
 		gltfs.forEach(gltf => {
 			const object = gltf.scene;
@@ -90,14 +92,16 @@ class NPCHandler{
 				animations: gltf.animations,
 				app: this.game,
 				showPath: false,
+				waypoints: this.waypoints,
 				zone: 'factory',
 				name: 'swat-guy',
 			};
 
 			const npc = new NPC(options);
 
-			npc.object.position.set(-7.607, 0.017, -7.713);
-			npc.action = 'idle';
+			npc.object.position.copy(this.randomWaypoint);
+			npc.newPath(this.randomWaypoint);
+			
 			
 			this.npcs.push(npc);
 			
