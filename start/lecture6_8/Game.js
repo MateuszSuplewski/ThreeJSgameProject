@@ -61,14 +61,16 @@ class Game{
 
 	initPathfinding(navmesh){
 		this.waypoints = [
-			new THREE.Vector3(17.73372016326552, 0.39953298254866443, -0.7466724607286782),
-			new THREE.Vector3(20.649478054772402, 0.04232912113775987, -18.282935518174437),
-			new THREE.Vector3(11.7688416798274, 0.11264635905666916, -23.23102176233945),
-			new THREE.Vector3(-3.111551689570482, 0.18245423057147991, -22.687392486867505),
-			new THREE.Vector3(-13.772447796604245, 0.1260277454451636, -23.12237117145656),
-			new THREE.Vector3(-20.53385139415452, 0.0904175187063471, -12.467546107992108),
-			new THREE.Vector3(-18.195950790753532, 0.17323640676321908, -0.9593366354062719),
-			new THREE.Vector3(-6.603208729295872, 0.015786387893574227, -12.265553884212125)
+			new THREE.Vector3(16.836317332513616,0.060003940016031265,-29.390526509545175),
+			new THREE.Vector3(-14.130741726917709,0.060003940016031265,-46.631700762265126),
+			new THREE.Vector3(-15.198706317565964,0.12882450927131117,-2.6986012862788122),
+			new THREE.Vector3(26.331321030266828,0.060003940016031265,-77.85337396698161),   
+			new THREE.Vector3(4.085515857586627,0.060003940016031265,8.1028098140725), 
+			new THREE.Vector3(90.28622391486289,0.060003940016031265,-2.7605851670515733), 
+			new THREE.Vector3(52.06990424375727,0.060003940016031265,7.6876088883489775),
+			new THREE.Vector3(80.98735333964716,0.060003940016031265,-71.82889209282159),
+			new THREE.Vector3(4.431296590931052,0.06000394001605969,-43.76197843146742),
+			new THREE.Vector3(-22.98505034689377,0.060003940016031265,29.68010609990918)
 		];
 		this.pathfinder = new Pathfinding();
         this.pathfinder.setZoneData('factory', Pathfinding.createZone(navmesh.geometry, 0.02));
@@ -106,6 +108,7 @@ class Game{
 	load(){
         this.loadEnvironment();
 		this.npcHandler = new NPCHandler(this);
+		this.user = new User(this, new THREE.Vector3(-6.047533136078318,0.17574677870531397,-1.9147849071112337),0);
     }
 
     loadEnvironment(){
@@ -116,7 +119,7 @@ class Game{
 		// Load a glTF resource
 		loader.load(
 			// resource URL
-			'factory2.glb',
+			'MyMap.glb',
 			// called when the resource is loaded
 			gltf => {
 
@@ -130,11 +133,13 @@ class Game{
 					if (child.isMesh){
 						if (child.name == 'NavMesh'){
 							this.navmesh = child;
-							this.navmesh.geometry.rotateX( Math.PI/2 );
+							this.navmesh.geometry.rotateX(Math.PI/2);
 							this.navmesh.quaternion.identity();
 							this.navmesh.position.set(0,0,0);
-							child.material.visible = false;
-						}else if (child.name.includes('fan')){
+							child.material.transparent = true;
+							child.material.opacity = 0.5;
+						}
+						if (child.name.includes('fan')){
 							this.fans.push( child );
 						}else if (child.material.name.includes('elements2')){
 							mergeObjects.elements2.push(child);
@@ -157,6 +162,7 @@ class Game{
 				});
 
 				this.scene.add(this.navmesh);
+				this.initPathfinding(this.navmesh);
 
 				for(let prop in mergeObjects){
 					const array = mergeObjects[prop];
@@ -171,8 +177,6 @@ class Game{
 				}
 
                 this.renderer.setAnimationLoop( this.render.bind(this) );
-
-				this.initPathfinding(this.navmesh);
 
 				this.loadingBar.visible = !this.loadingBar.loaded;
 			},
@@ -189,7 +193,7 @@ class Game{
 
 			}
 		);
-	}			
+	}	
     
 	startRendering(){
 		this.renderer.setAnimationLoop( this.render.bind(this) );

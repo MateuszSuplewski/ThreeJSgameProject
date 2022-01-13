@@ -12,8 +12,23 @@ import { DRACOLoader } from '../../libs/three128/DRACOLoader.js';
 
 class User{
     constructor(game, pos, heading){
-        
-    }
+        this.root = new Group();
+		this.root.position.copy(pos);
+		this.root.rotation.set(0,heading,0,'XYZ');
+
+		this.game=game
+		this.camera=game.camera;
+		this.raycaster = new Raycaster();
+
+		game.scene.add(this.root);
+
+		this.loadingBar = game.loadingBar;
+
+		this.load();
+
+		this.initMouseHandler();
+		
+	    }
 
     initMouseHandler(){
 		this.game.renderer.domElement.addEventListener( 'click', raycast, false );
@@ -41,16 +56,7 @@ class User{
 		}
     }
 
-	initRifleDirection(){
-		this.rifleDirection = {};
 
-		this.rifleDirection.idle = new Quaternion(-0.178, -0.694, 0.667, 0.203);
-		this.rifleDirection.walk = new Quaternion( 0.044, -0.772, 0.626, -0.102);
-		this.rifleDirection.firingwalk = new Quaternion(-0.025, -0.816, 0.559, -0.147);
-		this.rifleDirection.firing = new Quaternion( 0.037, -0.780, 0.6, -0.175);
-		this.rifleDirection.run = new Quaternion( 0.015, -0.793, 0.595, -0.131);
-		this.rifleDirection.shot = new Quaternion(-0.082, -0.789, 0.594, -0.138);
-	}
 	
     set position(pos){
         this.root.position.copy( pos );
@@ -72,10 +78,19 @@ class User{
         // Load a glTF resource
 		loader.load(
 			// resource URL
-			'eve.glb',
+			'swinka2.glb',
 			// called when the resource is loaded
 			gltf => {
+				this.root.add(gltf.scene);
+				this.object = gltf.scene;
+
 				
+				this.object.traverse(child => {
+					if(child.isMesh){
+						child.castShadow=true;
+						if(child.name.includes('Rifle')) this.rifle=child;
+					}
+				})
     		},
 			// called while loading is progressing
 			xhr => {
@@ -88,31 +103,6 @@ class User{
 		);
 	}
 
-    set action(name){
-		if (this.actionName == name.toLowerCase()) return;
-				
-		const clip = this.animations[name.toLowerCase()];
-
-		if (clip!==undefined){
-			const action = this.mixer.clipAction( clip );
-			if (name=='shot'){
-				action.clampWhenFinished = true;
-				action.setLoop( THREE.LoopOnce );
-			}
-			action.reset();
-			const nofade = this.actionName == 'shot';
-			this.actionName = name.toLowerCase();
-			action.play();
-			if (this.curAction){
-				if (nofade){
-					this.curAction.enabled = false;
-				}else{
-					this.curAction.crossFadeTo(action, 0.5);
-				}
-			}
-			this.curAction = action;
-		}
-	}
 	
 	update(dt){
 		if (this.mixer) this.mixer.update(dt);
