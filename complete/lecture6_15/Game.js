@@ -289,7 +289,7 @@ class Game {
   load() {
     this.loadEnvironment();
     this.npcHandler = new NPCHandler(this);
-    this.user = new User(this, new THREE.Vector3(-5.97, 0.021, -1.49), -5.222);
+    this.user = new User(this, new THREE.Vector3(-5.97, 0.021, -1.49), 1.57);
     this.ui = new UI(this);
   }
 
