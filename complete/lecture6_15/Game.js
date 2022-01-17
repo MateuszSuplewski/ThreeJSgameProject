@@ -1,6 +1,5 @@
 import * as THREE from "../../libs/three128/three.module.js";
 import { GLTFLoader } from "../../libs/three128/GLTFLoader.js";
-import { RGBELoader } from "../../libs/three128/RGBELoader.js";
 import { NPCHandler } from "./NPCHandler.js";
 import { LoadingBar } from "../../libs/LoadingBar.js";
 import { Pathfinding } from "../../libs/pathfinding/Pathfinding.js";
@@ -8,11 +7,6 @@ import { User } from "./User.js";
 import { Controller } from "./Controller.js";
 import { BulletHandler } from "./BulletHandler.js";
 import { UI } from "./UI.js";
-import { EffectComposer } from "../../libs/three128/pp/EffectComposer.js";
-import { RenderPass } from "../../libs/three128/pp/RenderPass.js";
-import { ShaderPass } from "../../libs/three128/pp/ShaderPass.js";
-import { GammaCorrectionShader } from "../../libs/three128/pp/GammaCorrectionShader.js";
-import { Tween } from "../../libs/Toon3D.js";
 import { SFX } from "../../libs/SFX.js";
 
 class Game {
@@ -42,96 +36,36 @@ class Game {
     this.scene.background = new THREE.Color(col);
     this.scene.fog = new THREE.Fog(col, 100, 200);
 
-    const ambient = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    const ambient = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.6);
     this.scene.add(ambient);
 
     const light = new THREE.DirectionalLight();
-    light.position.set(4, 20, 20);
-    light.target.position.set(-2, 0, 0);
+    light.position.set(0, 100, -180);
+    light.target.position.set(0, 0, 0);
     light.castShadow = true;
-    //Set up shadow properties for the light
-    light.shadow.mapSize.width = 1024;
-    light.shadow.mapSize.height = 512;
+    light.shadow.mapSize.width = 4096;
+    light.shadow.mapSize.height = 4096;
     light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 50;
-    const d = 30;
+    light.shadow.camera.far = 300;
+    const d = 160;
     light.shadow.camera.left = -d;
-    light.shadow.camera.bottom = -d * 0.25;
+    light.shadow.camera.bottom = -d * 0.55;
     light.shadow.camera.right = light.shadow.camera.top = d;
     this.scene.add(light);
     this.light = light;
-
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.VSMShadowMap;
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     container.appendChild(this.renderer.domElement);
-    this.setEnvironment();
-
-    this.initPostProcessing();
-
     this.load();
-
     this.raycaster = new THREE.Raycaster();
     this.tmpVec = new THREE.Vector3();
-
     this.active = false;
 
     window.addEventListener("resize", this.resize.bind(this));
-  }
-
-  initPostProcessing() {
-    this.composer = new EffectComposer(this.renderer);
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.composer.addPass(renderPass);
-    const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader);
-    this.composer.addPass(gammaCorrectionPass);
-
-    const tintShader = {
-      uniforms: {
-        tDiffuse: { value: null },
-        strength: { value: 0.0 },
-      },
-
-      vertexShader: /* glsl */ `
-				varying vec2 vUv;
-				void main() {
-					vUv = uv;
-					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-				}`,
-
-      fragmentShader: /* glsl */ `
-				uniform float strength;
-				uniform sampler2D tDiffuse;
-				varying vec2 vUv;
-				void main() {
-					vec3 texel = texture2D(tDiffuse, vUv).rgb;
-					vec3 tintColor = vec3(1.0, 0.3, 0.3);
-					float luminance = (texel.r + texel.g + texel.b)/3.0;
-					vec3 tint = tintColor * luminance * 1.8;
-					vec3 color = mix(texel, tint, clamp(strength, 0.0, 1.0));
-					gl_FragColor = vec4(color, 1.0);
-				}`,
-    };
-    this.tintPass = new ShaderPass(tintShader);
-    this.composer.addPass(this.tintPass);
-  }
-
-  tintScreen(action) {
-    this.tintPass.uniforms.strength.value = 1;
-    const duration = action == "shot" ? 3.0 : 1.5;
-    this.tween = new Tween(
-      this.tintPass.uniforms.strength,
-      "value",
-      0,
-      duration,
-      this.removeTween.bind(this)
-    );
-  }
-
-  removeTween() {
-    delete this.tween;
   }
 
   startGame() {
@@ -144,7 +78,7 @@ class Game {
     this.controller.cameraBase.getWorldQuaternion(this.camera.quaternion);
     this.sfx.play("atmos");
   }
-
+  /*
   seeUser(pos, seethrough = false) {
     if (this.seethrough) {
       this.seethrough.forEach((child) => {
@@ -186,7 +120,7 @@ class Game {
 
     return userVisible;
   }
-
+*/
   gameover() {
     this.active = false;
     this.ui.showGameover();
@@ -196,54 +130,44 @@ class Game {
   initPathfinding(navmesh) {
     this.waypoints = [
       new THREE.Vector3(
-        16.836317332513616,
-        0.060003940016031265,
-        -29.390526509545175
+        17.73372016326552,
+        0.39953298254866443,
+        -0.7466724607286782
       ),
       new THREE.Vector3(
-        -14.130741726917709,
-        0.060003940016031265,
-        -46.631700762265126
+        20.649478054772402,
+        0.04232912113775987,
+        -18.282935518174437
       ),
       new THREE.Vector3(
-        -15.198706317565964,
-        0.12882450927131117,
-        -2.6986012862788122
+        11.7688416798274,
+        0.11264635905666916,
+        -23.23102176233945
       ),
       new THREE.Vector3(
-        26.331321030266828,
-        0.060003940016031265,
-        -77.85337396698161
+        -3.111551689570482,
+        0.18245423057147991,
+        -22.687392486867505
       ),
       new THREE.Vector3(
-        4.085515857586627,
-        0.060003940016031265,
-        8.1028098140725
+        -13.772447796604245,
+        0.1260277454451636,
+        -23.12237117145656
       ),
       new THREE.Vector3(
-        90.28622391486289,
-        0.060003940016031265,
-        -2.7605851670515733
+        -20.53385139415452,
+        0.0904175187063471,
+        -12.467546107992108
       ),
       new THREE.Vector3(
-        52.06990424375727,
-        0.060003940016031265,
-        7.6876088883489775
+        -18.195950790753532,
+        0.17323640676321908,
+        -0.9593366354062719
       ),
       new THREE.Vector3(
-        80.98735333964716,
-        0.060003940016031265,
-        -71.82889209282159
-      ),
-      new THREE.Vector3(
-        4.431296590931052,
-        0.06000394001605969,
-        -43.76197843146742
-      ),
-      new THREE.Vector3(
-        -22.98505034689377,
-        0.060003940016031265,
-        29.68010609990918
+        -6.603208729295872,
+        0.015786387893574227,
+        -12.265553884212125
       ),
     ];
     this.pathfinder = new Pathfinding();
@@ -260,36 +184,10 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  setEnvironment() {
-    const loader = new RGBELoader()
-      .setDataType(THREE.UnsignedByteType)
-      .setPath(this.assetsPath);
-    const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    loader.load(
-      "hdr/factory.hdr",
-      (texture) => {
-        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-        pmremGenerator.dispose();
-
-        this.scene.environment = envMap;
-
-        this.loadingBar.visible = !this.loadingBar.loaded;
-      },
-      (xhr) => {
-        this.loadingBar.update("envmap", xhr.loaded, xhr.total);
-      },
-      (err) => {
-        console.error(err.message);
-      }
-    );
-  }
-
   load() {
     this.loadEnvironment();
     this.npcHandler = new NPCHandler(this);
-    this.user = new User(this, new THREE.Vector3(-5.97, 0.021, -1.49), 1.57);
+    this.user = new User(this, new THREE.Vector3(-5.97, 0.121, -1.49), 1.57);
     this.ui = new UI(this);
   }
 
@@ -301,14 +199,24 @@ class Game {
     // Load a glTF resource
     loader.load(
       // resource URL
-      "MyMap.glb",
+      "MyMap4.glb",
       // called when the resource is loaded
       (gltf) => {
         this.scene.add(gltf.scene);
         this.factory = gltf.scene;
-        this.fans = [];
+        this.stars = [];
 
-        const mergeObjects = { elements2: [], elements5: [], terrain: [] };
+        const mergeObjects = {
+          Material02: [],
+          Material03: [],
+          Material05: [],
+          Material07: [],
+          Material09: [],
+          Material11: [],
+          Material13: [],
+          Material14: [],
+          Base: [],
+        };
 
         gltf.scene.traverse((child) => {
           if (child.isMesh) {
@@ -319,28 +227,46 @@ class Game {
               this.navmesh.position.set(0, 0, 0);
               child.material.transparent = true;
               child.material.opacity = 0.3;
-            } else if (child.name.includes("fan")) {
-              this.fans.push(child);
-            } else if (child.material.name.includes("elements2")) {
-              mergeObjects.elements2.push(child);
-              child.castShadow = true;
-            } else if (child.material.name.includes("elements5")) {
-              mergeObjects.elements5.push(child);
-              child.castShadow = true;
-            } else if (child.material.name.includes("terrain")) {
-              mergeObjects.terrain.push(child);
-              child.castShadow = true;
-            } else if (child.material.name.includes("sand")) {
-              child.receiveShadow = true;
-            } else if (child.material.name.includes("elements1")) {
+            } else if (child.name.includes("star")) {
+              this.stars.push(child);
+            } else if (child.material.name.includes("Material02")) {
+              mergeObjects.Material02.push(child);
               child.castShadow = true;
               child.receiveShadow = true;
-            } else if (child.parent.name.includes("main")) {
+            } else if (child.material.name.includes("Material03")) {
+              mergeObjects.Material03.push(child);
               child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material05")) {
+              mergeObjects.Material05.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material07")) {
+              mergeObjects.Material07.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material09")) {
+              mergeObjects.Material09.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material11")) {
+              mergeObjects.Material11.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material13")) {
+              mergeObjects.Material13.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Material14")) {
+              mergeObjects.Material14.push(child);
+              child.castShadow = true;
+              child.receiveShadow = true;
+            } else if (child.material.name.includes("Base")) {
+              child.receiveShadow = true;
             }
           }
         });
-
+        console.log(mergeObjects);
         this.scene.add(this.navmesh);
 
         for (let prop in mergeObjects) {
@@ -404,9 +330,10 @@ class Game {
   render() {
     const dt = this.clock.getDelta();
 
-    if (this.fans !== undefined) {
-      this.fans.forEach((fan) => {
-        fan.rotateY(dt);
+    if (this.stars !== undefined) {
+      this.stars.forEach((star) => {
+        //star.rotateZ(dt);
+        star.rotateX(dt);
       });
     }
 
@@ -414,13 +341,8 @@ class Game {
     if (this.user !== undefined) this.user.update(dt);
     if (this.controller !== undefined) this.controller.update(dt);
     if (this.bulletHandler !== undefined) this.bulletHandler.update(dt);
-    if (this.tween !== undefined) this.tween.update(dt);
 
-    if (this.composer) {
-      this.composer.render();
-    } else {
-      this.renderer.render(this.scene, this.camera);
-    }
+    this.renderer.render(this.scene, this.camera);
   }
 }
 

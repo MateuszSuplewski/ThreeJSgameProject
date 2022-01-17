@@ -126,13 +126,13 @@ class User {
         name = "hit";
         //Temporarily disable control
         this.game.active = false;
-        setTimeout(() => (this.game.active = true), 500);
+        setTimeout(() => (this.game.active = true), 2000);
       } else {
         this.dead = true;
         this.root.userData.dead = true;
         this.game.gameover();
       }
-      this.game.tintScreen(name);
+
       this.game.ui.health = Math.max(0, Math.min(this.health / 100, 1));
       if (this.sfx) this.sfx.play("eve-groan");
     }
