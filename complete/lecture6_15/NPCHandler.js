@@ -3,7 +3,6 @@ import { GLTFLoader } from "../../libs/three128/GLTFLoader.js";
 import { DRACOLoader } from "../../libs/three128/DRACOLoader.js";
 import {
   Skeleton,
-  Raycaster,
   BufferGeometry,
   Line,
   Vector3,
@@ -16,32 +15,6 @@ class NPCHandler {
     this.ready = false;
     this.load();
   }
-  /*
-  initMouseHandler() {
-    const raycaster = new Raycaster();
-    this.game.renderer.domElement.addEventListener("click", raycast, false);
-
-    const self = this;
-    const mouse = { x: 0, y: 0 };
-
-    function raycast(e) {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-      //2. set the picking ray from the camera position and mouse coordinates
-      raycaster.setFromCamera(mouse, self.game.camera);
-
-      //3. compute intersections
-      const intersects = raycaster.intersectObject(self.game.navmesh);
-
-      if (intersects.length > 0) {
-        const pt = intersects[0].point;
-        console.log(pt);
-        self.npcs[0].newPath(pt, true);
-      }
-    }
-  }
-*/
 
   reset() {
     this.npcs.forEach((npc) => {
@@ -50,17 +23,14 @@ class NPCHandler {
   }
 
   load() {
-    const loader = new GLTFLoader().setPath(`${this.game.assetsPath}factory/`);
+    const loader = new GLTFLoader().setPath(`${this.game.assetsPath}factory/`); //asset
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../../libs/three128/draco/");
     loader.setDRACOLoader(dracoLoader);
     this.loadingBar.visible = true;
 
-    // Load a GLTF resource
     loader.load(
-      // resource URL
       `swat-guy2.glb`,
-      // called when the resource is loaded
       (gltf) => {
         if (this.game.pathfinder) {
           this.initNPCs(gltf);
@@ -68,11 +38,9 @@ class NPCHandler {
           this.gltf = gltf;
         }
       },
-      // called while loading is progressing
       (xhr) => {
         this.loadingBar.update("swat-guy", xhr.loaded, xhr.total);
       },
-      // called when loading has errors
       (err) => {
         console.error(err);
       }
@@ -81,13 +49,11 @@ class NPCHandler {
 
   initNPCs(gltf = this.gltf) {
     this.waypoints = this.game.waypoints;
-
     const gltfs = [gltf];
 
-    for (let i = 0; i < 3; i++) gltfs.push(this.cloneGLTF(gltf));
+    for (let i = 0; i < 7; i++) gltfs.push(this.cloneGLTF(gltf));
 
     this.npcs = [];
-
     gltfs.forEach((gltf) => {
       const object = gltf.scene;
       let rifle, aim;
@@ -118,33 +84,31 @@ class NPCHandler {
 
       const options = {
         object,
-        speed: 2.0,
+        speed: 1.4,
         animations: gltf.animations,
         waypoints: this.waypoints,
         app: this.game,
         showPath: false,
-        zone: "factory",
+        zone: "adventure", //zmienic zone
         name: "swat-guy",
         rifle,
         aim,
       };
 
       const npc = new NPC(options);
-
       npc.object.position.copy(this.randomWaypoint);
       npc.newPath(this.randomWaypoint);
-
       this.npcs.push(npc);
     });
 
     this.loadingBar.visible = !this.loadingBar.loaded;
     this.ready = true;
-
     this.game.startRendering();
   }
 
   cloneGLTF(gltf) {
-    //Function just copied from someone's GitHub to clone models with Three-JS
+    //Method just copied from someone's GitHub to clone models using Three-JS
+
     const clone = {
       animations: gltf.animations,
       scene: gltf.scene.clone(true),

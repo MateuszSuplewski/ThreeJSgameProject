@@ -1,7 +1,7 @@
 class UI {
   constructor(game) {
     const playBtn = document.getElementById("playBtn");
-    playBtn.addEventListener("click", this.playBtnPressed.bind(this));
+    playBtn.addEventListener("click", this.playBtnPressed.bind(this)); //zmienic nazwy img oraz zmienic img
 
     this.game = game;
   }
@@ -18,7 +18,7 @@ class UI {
     const playBtn = document.getElementById("playBtn");
     playBtn.style.display = "none";
     const img = playBtn.getElementsByTagName("img")[0];
-    img.src = "../../assets/factory/playagain.png";
+    img.src = "../../assets/factory/playagain.png"; // asset
     this.game.startGame();
   }
 
@@ -34,13 +34,6 @@ class UI {
       playBtn.style.display = "block";
     }
   }
-  ///change ammo to stars collected
-  set ammo(value) {
-    const progressBar = document.getElementsByName("ammoBar")[0];
-    const percent = `${value * 100}%`;
-    progressBar.style.width = percent;
-  }
-
   set health(value) {
     const progressBar = document.getElementsByName("healthBar")[0];
     const percent = `${value * 100}%`;

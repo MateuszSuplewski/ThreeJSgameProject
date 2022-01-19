@@ -1,19 +1,14 @@
 import {
   Group,
-  Object3D,
   Vector3,
   Quaternion,
-  Raycaster,
   AnimationMixer,
   SphereGeometry,
   MeshBasicMaterial,
   Mesh,
-  BufferGeometry,
-  Line,
-  LoopOnce,
 } from "../../libs/three128/three.module.js";
 import { GLTFLoader } from "../../libs/three128/GLTFLoader.js";
-import { DRACOLoader } from "../../libs/three128/DRACOLoader.js";
+import { DRACOLoader } from "../../libs/three128/DRACOLoader.js"; //zmienic assety(sciezki do pliku)
 import { SFX } from "../../libs/SFX.js";
 
 class User {
@@ -24,7 +19,6 @@ class User {
     this.startInfo = { pos: pos.clone(), heading };
     this.game = game;
     this.camera = game.camera;
-    this.raycaster = new Raycaster();
     game.scene.add(this.root);
     this.loadingBar = game.loadingBar;
     this.load();
@@ -38,8 +32,6 @@ class User {
     this.position = this.startInfo.pos;
     this.root.rotation.set(0, this.startInfo.heading, 0, "XYZ");
     this.root.userData.dead = false;
-    // change ammo to stars collected
-    this.ammo = 100;
     this.health = 100;
     this.dead = false;
     this.speed = 0;
@@ -63,7 +55,7 @@ class User {
   }
 
   load() {
-    const loader = new GLTFLoader().setPath(`${this.game.assetsPath}factory/`);
+    const loader = new GLTFLoader().setPath(`${this.game.assetsPath}factory/`); //asset
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../../libs/three128/draco/");
     loader.setDRACOLoader(dracoLoader);
@@ -93,7 +85,6 @@ class User {
           this.animations[animation.name.toLowerCase()] = animation;
         });
         this.mixer = new AnimationMixer(gltf.scene);
-
         this.ready = true;
         this.game.startRendering();
       },
@@ -109,22 +100,18 @@ class User {
   }
 
   initSounds() {
-    const assetsPath = `${this.game.assetsPath}factory/sfx/`;
-    this.sfx = new SFX(this.game.camera, assetsPath, this.game.listener);
-    this.sfx.load("footsteps", true, 0.8, this.object);
-    this.sfx.load("eve-groan", false, 0.8, this.object);
-    this.sfx.load("shot", false, 0.8, this.object);
+    const assetsPath = `${this.game.assetsPath}factory/sfx/`; //asset
+    this.sfx = new SFX(this.game.camera, assetsPath, this.game.listener); //asset
+    this.sfx.load("pig_groan", false, 0.8, this.object);
   }
 
   set action(name) {
     name = name.toLowerCase();
     if (this.actionName == name) return;
-    //console.log(`User action:${name}`);
     if (name == "shot") {
       this.health -= 25;
       if (this.health > 0) {
         name = "hit";
-        //Temporarily disable control
         this.game.active = false;
         setTimeout(() => (this.game.active = true), 2000);
       } else {
@@ -134,7 +121,7 @@ class User {
       }
 
       this.game.ui.health = Math.max(0, Math.min(this.health / 100, 1));
-      if (this.sfx) this.sfx.play("eve-groan");
+      if (this.sfx) this.sfx.play("pig_groan");
     }
   }
 

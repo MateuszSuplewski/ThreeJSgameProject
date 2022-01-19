@@ -92,8 +92,8 @@ class NPC {
   }
 
   initSounds() {
-    const assetsPath = `${this.app.assetsPath}factory/sfx/`;
-    this.sfx = new SFX(this.app.camera, assetsPath, this.app.listener);
+    const assetsPath = `${this.app.assetsPath}factory/sfx/`; //asset
+    this.sfx = new SFX(this.app.camera, assetsPath, this.app.listener); //asset
     this.sfx.load("footsteps", true, 0.6, this.object);
     this.sfx.load("shot", false, 0.6, this.object);
   }
@@ -128,16 +128,14 @@ class NPC {
 
     if (this.pathfinder === undefined) {
       this.calculatedPath = [pt.clone()];
-      //Calculate target direction
+
       this.setTargetDirection(pt.clone());
       this.action = "walking";
       return;
     }
 
     if (this.sfx) this.sfx.play("footsteps");
-    //console.log(`New path to ${pt.x.toFixed(1)}, ${pt.y.toFixed(2)}, ${pt.z.toFixed(2)}`);
 
-    // Calculate a path to the target and store it
     this.calculatedPath = this.pathfinder.findPath(
       player.position,
       pt,
@@ -160,7 +158,6 @@ class NPC {
 
         const points = [player.position];
 
-        // Draw debug lines
         this.calculatedPath.forEach(function (vertex) {
           points.push(vertex.clone());
         });
@@ -169,8 +166,6 @@ class NPC {
 
         this.pathLines = new THREE.Line(geometry, material);
         this.app.scene.add(this.pathLines);
-
-        // Draw debug spheres except the last one. Also, add the player position.
         const debugPath = [player.position].concat(this.calculatedPath);
 
         debugPath.forEach((vertex) => {
@@ -286,28 +281,23 @@ class NPC {
   }
 
   pointAtEnemy() {
-    //Aim at enemy
     this.object.getWorldQuaternion(this.tmpQuat);
     this.object.lookAt(this.enemy.position);
     this.object.quaternion.slerp(this.tmpQuat, 0.9);
   }
-  //Might be used to collect stars by raycast intersect
+
   seeEnemy() {
     const enemyVec = this.enemy.position.clone().sub(this.object.position);
     const enemyDistance = enemyVec.length();
     enemyVec.normalize();
-
     this.aim.getWorldPosition(this.tmpVec);
     this.raycaster.set(this.tmpVec, enemyVec);
-
     const intersects = this.raycaster.intersectObjects(
       this.app.factory.children
     );
-
     if (intersects.length > 0) {
       return intersects[0].distance > enemyDistance;
     }
-
     return true;
   }
 
@@ -315,9 +305,7 @@ class NPC {
     const speed =
       this.actionName == "firingwalk" ? this.speed * 0.6 : this.speed;
     const player = this.object;
-
     if (this.mixer) this.mixer.update(dt);
-
     if (this.rotateRifle !== undefined) {
       this.rotateRifle.time += dt;
       if (this.rotateRifle.time > 0.5) {
@@ -334,11 +322,8 @@ class NPC {
 
     if (this.app.active && this.enemy && !this.enemy.userData.dead) {
       if (!this.aggro) {
-        //Not in aggro mode so check enemy is in range and in sight
         if (this.withinAggroRange()) {
-          //Less than 20 metres away
           if (this.withinFOV(120)) {
-            //Within a 120 deg FOV
             this.aggro = true;
             const v = this.enemy.position.clone().sub(this.object.position);
             const len = v.length();
@@ -351,7 +336,6 @@ class NPC {
           }
         }
       } else {
-        //Check still in aggro andrange
         if (this.withinAggroRange()) {
           const v = this.enemy.position.clone().sub(this.object.position);
           const len = v.length();
@@ -374,7 +358,7 @@ class NPC {
             if (this.isFiring && this.seeEnemy()) {
               const elapsedTime =
                 this.app.clock.getElapsedTime() - this.bulletTime;
-              if (elapsedTime > 0.6) this.shoot();
+              if (elapsedTime > 0.8) this.shoot();
             } else if (this.isFiring && !this.seeEnemy()) {
               const elapsedTime =
                 this.app.clock.getElapsedTime() - this.bulletTime;
@@ -393,26 +377,19 @@ class NPC {
 
     if (this.calculatedPath && this.calculatedPath.length) {
       const targetPosition = this.calculatedPath[0];
-
       const vel = targetPosition.clone().sub(player.position);
-
       let pathLegComplete = vel.lengthSq() < 0.01;
-
       if (!pathLegComplete) {
-        //Get the distance to the target before moving
         const prevDistanceSq =
           player.position.distanceToSquared(targetPosition);
         vel.normalize();
-        // Move player to target
         if (this.quaternion) player.quaternion.slerp(this.quaternion, 0.1);
         player.position.add(vel.multiplyScalar(dt * speed));
-        //Get distance after moving, if greater then we've overshot and this leg is complete
         const newDistanceSq = player.position.distanceToSquared(targetPosition);
         pathLegComplete = newDistanceSq > prevDistanceSq;
       }
 
       if (pathLegComplete) {
-        // Remove node from the path we calculated
         this.calculatedPath.shift();
         if (this.calculatedPath.length == 0) {
           if (this.waypoints !== undefined) {

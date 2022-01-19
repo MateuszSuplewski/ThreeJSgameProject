@@ -2,12 +2,12 @@ import {
   Mesh,
   CylinderGeometry,
   MeshBasicMaterial,
-  Raycaster,
   Vector3,
   Quaternion,
 } from "../../libs/three128/three.module.js";
 import { sphereIntersectsCylinder } from "../../libs/Collisions.js";
 
+//USING PRE-MADE by someone Collisions.js
 class BulletHandler {
   constructor(game) {
     this.game = game;
@@ -15,15 +15,11 @@ class BulletHandler {
     const geometry = new CylinderGeometry(0.01, 0.01, 0.08);
     geometry.rotateX(Math.PI / 2);
     geometry.rotateY(Math.PI / 2);
-    const material = new MeshBasicMaterial();
+    const material = new MeshBasicMaterial({ color: 0xff0000 });
     this.bullet = new Mesh(geometry, material);
-
     this.bullets = [];
-
     this.npcs = this.game.npcHandler.npcs;
-
     this.user = this.game.user;
-
     this.forward = new Vector3(0, 0, -1);
     this.xAxis = new Vector3(1, 0, 0);
     this.tmpVec3 = new Vector3();
@@ -46,13 +42,11 @@ class BulletHandler {
       const p1 = bullet.position.clone();
       let target;
       const dist = dt * 15;
-      //Move bullet to next position
       bullet.translateX(dist);
       const p3 = bullet.position.clone();
       bullet.position.copy(p1);
       const iterations = 1;
       const p = this.tmpVec3;
-
       for (let i = 1; i <= iterations; i++) {
         p.lerpVectors(p1, p3, i / iterations);
         if (bullet.userData.targetType == 1) {
@@ -73,7 +67,6 @@ class BulletHandler {
         }
         if (hit) break;
       }
-
       if (hit) {
         target.action = "shot";
         bullet.userData.remove = true;
@@ -84,7 +77,6 @@ class BulletHandler {
         bullet.userData.remove = bullet.userData.distance > 50;
       }
     });
-
     let found = false;
     do {
       let remove;

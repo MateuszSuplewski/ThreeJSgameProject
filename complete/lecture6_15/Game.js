@@ -8,6 +8,7 @@ import { Controller } from "./Controller.js";
 import { BulletHandler } from "./BulletHandler.js";
 import { UI } from "./UI.js";
 import { SFX } from "../../libs/SFX.js";
+import { Raycaster, Vector3 } from "../../libs/three128/three.module.js";
 
 class Game {
   constructor() {
@@ -19,7 +20,7 @@ class Game {
     this.loadingBar = new LoadingBar();
     this.loadingBar.visible = false;
 
-    this.assetsPath = "../../assets/";
+    this.assetsPath = "../../assets/"; //asset
 
     this.camera = new THREE.PerspectiveCamera(
       45,
@@ -30,15 +31,9 @@ class Game {
 
     this.camera.position.set(-10.6, 1.6, -1.46);
     this.camera.rotation.y = -Math.PI * 0.5;
-
-    let col = 0x201510;
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(col);
-    this.scene.fog = new THREE.Fog(col, 100, 200);
-
     const ambient = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.6);
     this.scene.add(ambient);
-
     const light = new THREE.DirectionalLight();
     light.position.set(0, 100, -180);
     light.target.position.set(0, 0, 0);
@@ -61,118 +56,167 @@ class Game {
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     container.appendChild(this.renderer.domElement);
     this.load();
-    this.raycaster = new THREE.Raycaster();
     this.tmpVec = new THREE.Vector3();
     this.active = false;
-
+    this.CollectedStar = 0;
+    this.raycaster = new Raycaster();
+    this.speed = 10;
+    this.forward = new Vector3(0, 0, 1);
+    this.down = new Vector3(0, -1, 0);
+    this.elm = document.getElementById("score");
+    this.elm.innerHTML = this.CollectedStar;
     window.addEventListener("resize", this.resize.bind(this));
   }
 
   startGame() {
     this.user.reset();
     this.npcHandler.reset();
-    this.ui.ammo = 1;
     this.ui.health = 1;
     this.active = true;
     this.controller.cameraBase.getWorldPosition(this.camera.position);
     this.controller.cameraBase.getWorldQuaternion(this.camera.quaternion);
-    this.sfx.play("atmos");
+    this.elm.innerHTML = this.CollectedStar;
+    this.sfx.play("background_music");
   }
-  /*
-  seeUser(pos, seethrough = false) {
-    if (this.seethrough) {
-      this.seethrough.forEach((child) => {
-        child.material.transparent = false;
-        child.material.opacity = 1;
-        //child.visible = true;
-      });
-      delete this.seethrough;
-    }
 
-    this.tmpVec.copy(this.user.position).sub(pos).normalize();
-    this.raycaster.set(pos, this.tmpVec);
+  //Should be placed in User.js
+  MyIntersectionWithStars() {
+    const forward = this.forward
+      .clone()
+      .applyQuaternion(this.user.root.quaternion);
 
-    const intersects = this.raycaster.intersectObjects(
-      this.factory.children,
-      true
-    );
-    let userVisible = true;
+    const pos = this.user.root.position
+      .clone()
+      .add(forward.multiplyScalar(this.speed * 0.167));
+    pos.y += 2;
 
-    if (intersects.length > 0) {
-      const dist = this.tmpVec.copy(this.user.position).distanceTo(pos);
+    this.raycaster.set(pos, this.forward);
+    const intersects3 = this.raycaster.intersectObjects(this.stars);
 
-      if (seethrough) {
-        this.seethrough = [];
-        intersects.some((intersect) => {
-          if (intersect.distance < dist) {
-            this.seethrough.push(intersect.object);
-            //intersect.object.visible = false;
-            intersect.object.material.transparent = true;
-            intersect.object.material.opacity = 0.3;
-          } else {
-            return true;
-          }
-        });
-      } else {
-        userVisible = intersects[0].distance > dist;
+    this.stars.forEach((star) => {
+      let zmienna = star.parent.position;
+      if (
+        intersects3.length > 0 &&
+        Math.abs(pos.x - zmienna.x) < 1 &&
+        Math.abs(pos.z - zmienna.z) < 1 &&
+        (star.parent.visible = true)
+      ) {
+        star.parent.visible = false;
+        this.CollectedStar++;
       }
-    }
+    });
 
-    return userVisible;
+    this.elm.innerHTML = this.CollectedStar;
   }
-*/
+
   gameover() {
     this.active = false;
     this.ui.showGameover();
-    this.sfx.stop("atmos");
+    this.sfx.stop("background_music");
   }
 
   initPathfinding(navmesh) {
+    //dodac wiecej vectorow
     this.waypoints = [
       new THREE.Vector3(
-        17.73372016326552,
-        0.39953298254866443,
-        -0.7466724607286782
+        -88.39995012879542,
+        0.060003940016031265,
+        47.91087570508797
       ),
       new THREE.Vector3(
-        20.649478054772402,
-        0.04232912113775987,
-        -18.282935518174437
+        -78.4923082960824,
+        0.060003940016031265,
+        -23.421633979696786
       ),
       new THREE.Vector3(
-        11.7688416798274,
-        0.11264635905666916,
-        -23.23102176233945
+        -49.2386501515122,
+        0.060003940016031265,
+        -61.02422594586551
       ),
       new THREE.Vector3(
-        -3.111551689570482,
-        0.18245423057147991,
-        -22.687392486867505
+        -3.5152614471885553,
+        0.060003940016031265,
+        -81.69360168132694
       ),
       new THREE.Vector3(
-        -13.772447796604245,
-        0.1260277454451636,
-        -23.12237117145656
+        35.50723672098864,
+        0.060003940016031265,
+        -75.13682842882199
       ),
       new THREE.Vector3(
-        -20.53385139415452,
-        0.0904175187063471,
-        -12.467546107992108
+        26.08860186626816,
+        0.060003940016031265,
+        -55.103758868338204
       ),
       new THREE.Vector3(
-        -18.195950790753532,
-        0.17323640676321908,
-        -0.9593366354062719
+        86.0872651176034,
+        0.060003940016002844,
+        -73.2799741960624
       ),
       new THREE.Vector3(
-        -6.603208729295872,
-        0.015786387893574227,
-        -12.265553884212125
+        27.845659836717527,
+        0.060003940016031265,
+        -30.968487457115998
+      ),
+      new THREE.Vector3(
+        6.326819530558916,
+        0.060003940016031265,
+        -41.923316754164375
+      ),
+      new THREE.Vector3(
+        5.781401019271186,
+        0.060003940016031265,
+        -8.860665819624327
+      ),
+      new THREE.Vector3(
+        -23.72337607650453,
+        0.1218971951363983,
+        0.8565288468841068
+      ),
+      new THREE.Vector3(
+        -43.39227903498295,
+        0.06000394001605969,
+        38.505916101859356
+      ),
+      new THREE.Vector3(
+        -92.32557881018542,
+        0.060003940016031265,
+        32.408493517928534
+      ),
+      new THREE.Vector3(
+        90.94193430004039,
+        0.060003940016031265,
+        46.35813161206724
+      ),
+      new THREE.Vector3(
+        87.8435054023599,
+        0.060003940016031265,
+        6.109725616217677
+      ),
+      new THREE.Vector3(
+        -12.287028405105879,
+        0.06000394001605969,
+        44.78899822384498
+      ),
+      new THREE.Vector3(
+        -39.51984523277813,
+        0.06000394001605969,
+        -18.55243199522927
+      ),
+      new THREE.Vector3(
+        1.3013208969416183,
+        0.20942857551091265,
+        -0.5635742535391692
+      ),
+      new THREE.Vector3(
+        -57.71466420999785,
+        0.060003940016031265,
+        -17.10416307072299
       ),
     ];
     this.pathfinder = new Pathfinding();
     this.pathfinder.setZoneData(
-      "factory",
+      "adventure", // zmienic datazone
       Pathfinding.createZone(navmesh.geometry, 0.02)
     );
     if (this.npcHandler.gltf !== undefined) this.npcHandler.initNPCs();
@@ -189,23 +233,31 @@ class Game {
     this.npcHandler = new NPCHandler(this);
     this.user = new User(this, new THREE.Vector3(-5.97, 0.121, -1.49), 1.57);
     this.ui = new UI(this);
+
+    let path = "textures/sb_frozen/frozen_";
+    let format = ".jpg";
+    let urls = [
+      path + "ft" + format,
+      path + "bk" + format,
+      path + "up" + format,
+      path + "dn" + format,
+      path + "rt" + format,
+      path + "lf" + format,
+    ];
+    let reflectionCube = new THREE.CubeTextureLoader().load(urls);
+    reflectionCube.format = THREE.RGBFormat;
+    this.scene.background = reflectionCube;
   }
 
   loadEnvironment() {
-    const loader = new GLTFLoader().setPath(`${this.assetsPath}factory/`);
-
+    const loader = new GLTFLoader().setPath(`${this.assetsPath}factory/`); //asset
     this.loadingBar.visible = true;
-
-    // Load a glTF resource
     loader.load(
-      // resource URL
       "MyMap4.glb",
-      // called when the resource is loaded
       (gltf) => {
         this.scene.add(gltf.scene);
-        this.factory = gltf.scene;
+        this.factory = gltf.scene; // factory
         this.stars = [];
-
         const mergeObjects = {
           Material02: [],
           Material03: [],
@@ -217,7 +269,6 @@ class Game {
           Material14: [],
           Base: [],
         };
-
         gltf.scene.traverse((child) => {
           if (child.isMesh) {
             if (child.name == "NavMesh") {
@@ -226,7 +277,7 @@ class Game {
               this.navmesh.quaternion.identity();
               this.navmesh.position.set(0, 0, 0);
               child.material.transparent = true;
-              child.material.opacity = 0.3;
+              child.material.opacity = 0;
             } else if (child.name.includes("star")) {
               this.stars.push(child);
             } else if (child.material.name.includes("Material02")) {
@@ -266,9 +317,7 @@ class Game {
             }
           }
         });
-        console.log(mergeObjects);
         this.scene.add(this.navmesh);
-
         for (let prop in mergeObjects) {
           const array = mergeObjects[prop];
           let material;
@@ -280,20 +329,14 @@ class Game {
             }
           });
         }
-
         this.controller = new Controller(this);
-
         this.renderer.setAnimationLoop(this.render.bind(this));
-
         this.initPathfinding(this.navmesh);
-
         this.loadingBar.visible = !this.loadingBar.loaded;
       },
-      // called while loading is progressing
       (xhr) => {
         this.loadingBar.update("environment", xhr.loaded, xhr.total);
       },
-      // called when loading has errors
       (err) => {
         console.error(err);
       }
@@ -305,10 +348,10 @@ class Game {
     this.camera.add(this.listener);
     this.sfx = new SFX(
       this.camera,
-      `${this.assetsPath}factory/sfx/`,
+      `${this.assetsPath}factory/sfx/`, //asset
       this.listener
     );
-    this.sfx.load("atmos", true, 0.1);
+    this.sfx.load("background_music", true, 0.1);
     this.user.initSounds();
     this.npcHandler.npcs.forEach((npc) => npc.initSounds());
   }
@@ -330,18 +373,18 @@ class Game {
   render() {
     const dt = this.clock.getDelta();
 
+    this.MyIntersectionWithStars();
+
     if (this.stars !== undefined) {
       this.stars.forEach((star) => {
         //star.rotateZ(dt);
         star.rotateX(dt);
       });
     }
-
     if (this.npcHandler !== undefined) this.npcHandler.update(dt);
     if (this.user !== undefined) this.user.update(dt);
     if (this.controller !== undefined) this.controller.update(dt);
     if (this.bulletHandler !== undefined) this.bulletHandler.update(dt);
-
     this.renderer.render(this.scene, this.camera);
   }
 }
